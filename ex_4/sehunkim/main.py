@@ -10,6 +10,16 @@ import soundfile
 
 
 def autocorr(wave_array, sr):
+    """
+    Function for finding f0
+
+    Parameters:
+    wave_array : sound data
+    sr : sampling rate of input data
+
+    Return:
+    f0 : calculated f0
+    """
     m = 500
     temp = 0
     r = np.array([])
@@ -23,7 +33,7 @@ def autocorr(wave_array, sr):
     max_peak = 0
     n_max_peak = 0
     for i in range(len(peaks_r)):
-        if max_peak < r[peaks_r[i]] :
+        if max_peak < r[peaks_r[i]]:
             max_peak = r[peaks_r[i]]
             n_max_peak = peaks_r[i]
 
@@ -32,7 +42,6 @@ def autocorr(wave_array, sr):
     else:
         f0 = sr/n_max_peak
 
-    """
     plt.title("autocorrelation")
     plt.plot(r, label='r(m)')
     plt.plot(peaks_r, r[peaks_r], "x", label='peak')
@@ -44,8 +53,9 @@ def autocorr(wave_array, sr):
     plt.savefig("autocorr.png")
     plt.clf()
     #input("Press Enter to continue...")
-    """
+
     return f0
+
 
 def autocorr_func(data):
     data_len = len(data)
@@ -53,6 +63,7 @@ def autocorr_func(data):
     for i in range(data_len):
         cor[i] = data[:data_len - i] @ data[i:]
     return cor
+
 
 def cepstrum(frame, sr):
     time_vector = np.arange(len(frame)) / sr
@@ -64,9 +75,9 @@ def cepstrum(frame, sr):
     spec = np.fft.rfft(frame)
     log_spec = 20 * np.log10(np.abs(spec))
 
+    """
     plt.xlabel('frequency (Hz)')
     plt.title('Fourier spectrum')
-    """
     plt.savefig("Fourier spectrum.png")
     plt.clf()    
     """
@@ -80,7 +91,7 @@ def cepstrum(frame, sr):
     max_peak = 0
     n_max_peak = 0
     for i in range(len(peaks_ceps)):
-        if max_peak < np.abs(cepstrum[peaks_ceps[i]]) and (1/quefrency_vector[peaks_ceps[i]]) < 500 :
+        if max_peak < np.abs(cepstrum[peaks_ceps[i]]) and (1/quefrency_vector[peaks_ceps[i]]) < 500:
             max_peak = np.abs(cepstrum[peaks_ceps[i]])
             n_max_peak = peaks_ceps[i]
     if max_peak == 0:
@@ -100,18 +111,16 @@ def cepstrum(frame, sr):
     collection = collections.BrokenBarHCollection.span_where(
         quefrency_vector, ymin=0, ymax=np.abs(cepstrum).max(), where=valid, facecolor='green', alpha=0.5, label='valid pitches')
     ax.add_collection(collection)
-    plt.ylim([0,2000])
+    plt.ylim([0, 2000])
     plt.xlabel('Quefrency (s)')
     plt.title('Cepstrum')
- 
+    plt.legend()
     plt.savefig("cepstrum.png")
     plt.clf()
 
-    print("cepstrum:", cepstrum)
     cepstrum = np.nan_to_num(cepstrum)
     lifter = np.zeros(len(cepstrum))
     lifter[:int(n_max_peak * 1)] = 1
-    print("lifter :", lifter)
     liftered_cepstrum = lifter * cepstrum
     liftered_spec = np.fft.irfft(liftered_cepstrum)
     if len(spec) > len(liftered_spec):
@@ -125,10 +134,9 @@ def cepstrum(frame, sr):
     plt.xlabel('frequency (Hz)')
     plt.title('power spectrum')
     plt.legend()
-    
-    input("Press Enter to continue...")
 
     return f0
+
 
 def lev_durb(cor, order, sr):
     a = np.zeros(order + 1)
@@ -155,21 +163,22 @@ def lev_durb(cor, order, sr):
 
     return a, e[-1]
 
+
 def lpc(frame, order, frame_size, sr):
     dt = 1./sr
-    
     cor = autocorr_func(frame)
     cor = cor[:len(cor)//2]
     a, e = lev_durb(cor, order, sr)
     h = sig.freqz(np.sqrt(e), a, frame_size, "whole")[1]
     env_lpc = 20 * np.log10(np.abs(h))
     freq_vector = np.fft.rfftfreq(len(env_lpc), d=dt)
-    plt.plot(freq_vector[:len(env_lpc)//2], env_lpc[:len(env_lpc)//2], color='g', label='lpc')
+
+    plt.plot(freq_vector[:len(env_lpc)//2],
+             env_lpc[:len(env_lpc)//2], color='g', label='lpc')
     plt.legend()
     plt.savefig("liftered spectrum.png")
-
     plt.clf()
-    return env_lpc    
+    return env_lpc
 
 
 def main():
@@ -181,7 +190,7 @@ def main():
     parser.add_argument("-ov", dest="overlap", type=float,
                         help='Frame overlap ratio (optional default = 0.5)', required=False, default=0.5)
     parser.add_argument("-o", dest="lpc_order", type=int,
-                        help='order for lpc', required=False, default=32)
+                        help='order for lpc', required=False, default=64)
     args = parser.parse_args()
     frame_size = args.frame_size
     overlap = args.overlap
@@ -194,12 +203,14 @@ def main():
     f0_autocorr = np.array([])
     f0_ceps = np.array([])
     n_of_frame = len(wave_array)//int(frame_size * (1-overlap))
+    
     for frame_no in range(n_of_frame):
         frame = wave_array[int(frame_no * frame_size * (1-overlap)): int((frame_no+1) * frame_size * (1 - overlap))]
         f0_autocorr = np.append(f0_autocorr, autocorr(frame, sr))
         f0_ceps = np.append(f0_ceps, cepstrum(frame, sr))
         env_lpc = lpc(frame, lpc_order, frame_size, sr)
         frame = []
+        input("Press Enter to continue...")
 
     x = np.linspace(0, duration, n_of_frame)
     librosa.display.specshow(Xdb, sr=sr, x_axis="time", y_axis="hz")
