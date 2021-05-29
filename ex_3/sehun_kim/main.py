@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import argparse
 import csv
@@ -21,6 +22,8 @@ def csv_open(fname):
     file = np.array(file)
     return file
 
+def rotate(angle):
+    ax.view_init(azim=angle)
 
 def reg_2d(data, order, nc):
     """
