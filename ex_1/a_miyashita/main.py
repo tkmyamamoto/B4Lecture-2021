@@ -18,11 +18,11 @@ def stft(signal, n_fft=512):
     # zero padding
     signal = np.pad(signal, [0, n_fft])
 
-    n_frame = (length + n_shift -1) // n_shift
+    n_frame = (length - n_fft) // n_shift + 1
     spectrogram = np.zeros((n_fft // 2 + 1, n_frame), dtype=np.complex128)
 
     i = 0
-    for start in range(0, length, n_shift):
+    for start in range(0, length - n_fft + 1, n_shift):
         # cut signal
         signal_cut = signal[start : start + n_fft]
 
