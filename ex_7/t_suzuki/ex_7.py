@@ -132,7 +132,7 @@ def main():
         plt.scatter(data[:, 0], data[:, 1], facecolor='None', edgecolor='skyblue', label='Data sample')
         plt.scatter(mean[:, 0], mean[:, 1], marker='x', c='red', label='Centroids')
         cont = plt.contour(x1, x2, prob, cmap='rainbow')
-        cont.clabel(fmt='%1.1f', fontsize=12)
+        cont.clabel(fmt='%1.2f', fontsize=12)
         plt.xlabel('$X_{1}$')
         plt.ylabel('$X_{2}$')
         plt.title(f'K = {cls_num}')
