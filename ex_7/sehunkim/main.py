@@ -34,8 +34,8 @@ def plot1d(data, K, pi, mu, sigma, iter):
     plt.xlabel('x')
     plt.ylabel('probability density')
     plt.legend(loc='upper right')
-    plt.title('1D GMM (K = %d), Iter = %d' % (K, iter))
-    plt.savefig("result_iter=%d.png" % (iter))
+    plt.title(f'1D GMM (K = {K}), Iter = {iter}')
+    plt.savefig(f"result_iter={iter}.png")
     plt.clf()
 
 
@@ -63,19 +63,29 @@ def plot2d_3D(data, K, pi, mu, sigma, iter, fig):
         Z += pi[i] * multivariate_normal.pdf(XY, mu[i], sigma[i])
 
     ax = Axes3D(fig)
-    ax.set_title("2D GMM (K = %d), iter = %d" % (K, iter), size=20)
+    ax.set_title(f"2D GMM (K = {K}), iter = {iter}", size=20)
     ax.scatter3D(data_x, data_y, np.zeros_like(
         data_x), s=2, label='original data')
     ax.contour3D(X, Y, Z, 50)
-    ax.scatter(mu_x, mu_y, np.zeros_like(mu_x),
-               c='r', label='Calculated centroids')
+    ax.scatter(mu_x, mu_y, np.zeros_like(mu_x), s= 40, linewidths=3, c='r', marker = 'x',label='Calculated centroids')
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_zlabel('probability density')
 
     ax.legend()
     ax.view_init(azim=70, elev=40)
-    fig.savefig("result_iter=%d.png" % (iter))
+    fig.savefig(f"result_iter={iter}.png")
+    plt.clf()
+
+def plot_likelihood(likelihood, filename):
+    """
+    Function for plotting log likelihood
+    """
+    plt.plot(likelihood)
+    plt.title(f'log likelihood of {filename}')
+    plt.xlabel('iteration')
+    plt.ylabel('log likelihood')
+    plt.savefig('log_lokelihood.png')
     plt.clf()
 
 
@@ -172,8 +182,10 @@ def gmm_classification(x, K, D, max_iter):
             plot1d(x, K, pi, mu, sigma, i)
         elif D == 2:
             plot2d_3D(x, K, pi, mu, sigma, i, fig)
+    print(i)
     make_gif(i)
 
+    
     return pi, mu, sigma, likelihood
 
 
@@ -191,7 +203,7 @@ def main():
     K = args.K
     max_iter = args.max_iter
     pi, mu, sigma, likelihood = gmm_classification(data, K, dim, max_iter)
-
+    plot_likelihood(likelihood, args.filename)
 
 if __name__ == "__main__":
     main()
