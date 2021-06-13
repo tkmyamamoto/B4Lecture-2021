@@ -199,16 +199,6 @@ def main(args):
     # load csv file and convert to ndarray
     data = pd.read_csv(os.path.join(path, "data", fname), header=None).values
     pi, mu, sigma = init(data, n_clusters)
-
-    """
-    a = np.arange(12).reshape(2, 6)
-    b = np.array([1, 2, 3, 4, 5, 6])
-    print(a)
-    print(b)
-    print(a / b)
-    print((a / b).shape)
-    """
-
     likelihoods, pi, mu, sigma = em_algorithm(data, pi, mu, sigma)
 
     # plot likelihood
