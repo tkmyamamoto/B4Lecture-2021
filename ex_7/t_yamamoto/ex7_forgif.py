@@ -386,10 +386,12 @@ def em_algorithm(
 
 
 def main(args):
+    """
     fname = "data1.csv"
     n_clusters = 2
-    # fname = args.fname
-    # n_clusters = args.n_clusters
+    """
+    fname = args.fname
+    n_clusters = args.n_clusters
 
     # get current working directory
     path = os.path.dirname(os.path.abspath(__file__))
@@ -489,7 +491,6 @@ def main(args):
 if __name__ == "__main__":
     # process args
     parser = argparse.ArgumentParser(description="Fitting with GMM model.")
-    """
     parser.add_argument("fname", type=str, help="Load filename")
     parser.add_argument(
         "-n",
@@ -498,6 +499,5 @@ if __name__ == "__main__":
         help="The number of clusters (optional, Default=2)",
         default=2,
     )
-    """
     args = parser.parse_args()
     main(args)
