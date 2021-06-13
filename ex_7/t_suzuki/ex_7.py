@@ -2,13 +2,11 @@ import os
 import argparse
 import numpy as np
 import pandas as pd
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal
 
 
 def gauss(data, mean, sigma):
-
     n = data.shape[0]
     dim = data.shape[1]
     gauss = np.array([])
