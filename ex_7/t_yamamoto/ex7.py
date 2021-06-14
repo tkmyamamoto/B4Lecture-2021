@@ -184,9 +184,67 @@ def em_algorithm(data, pi, mu, sigma, convergence=1e-3, max_iter=300, process_gi
     return likelihoods, pi, mu, sigma
 
 
+def calc_bic(data, n_clusters):
+    """
+    Calculate bayesian information criterion (BIC).
+
+    Parameters:
+        data : ndarray (N, D)
+            Input data from csv file.
+        n_clusters : int
+            The number of clusters (n_clusters := K).
+
+    Returns:
+        bic : float
+            Bayesian information criterion (BIC).
+    """
+    N, D = data.shape
+    pi, mu, sigma = init(data, n_clusters)
+    likelihoods, _, _, _ = em_algorithm(data, pi, mu, sigma)
+    likelihood = likelihoods[-1]
+
+    # The number of parameters M
+    # --
+    # pi : ndarray (K,)
+    #     Mixing coefficient.
+    # mu : ndarray (K, D)
+    #     Average value.
+    # sigma : ndarray (K, D, D)
+    #     Covariance matrix.
+    # --
+    # -> M = K + KD + KD^2 = K(1 + D + D^2)
+    M = n_clusters * (1 + D + D ** 2)
+
+    bic = -2 * likelihood + M * np.log(N)
+    return bic
+
+
+def estimate_n_clusters(data, start=1, stop=10):
+    """
+    Estimate the number of clusters.
+
+    Parameters:
+        data : ndarray (N, D)
+            Input data from csv file.
+        start : int, Default=1
+            BIC is calculated from the number of clusters defined as "start".
+        stop : int, Default=10
+            BIC is calculated to the number of clusters defined as "stop".
+
+    Returns:
+        bic : list
+            A list of Bayesian information criterion (BIC).
+        K_estimate : int
+            The estimated number of clusters.
+    """
+    bic = [calc_bic(data, n_clusters) for n_clusters in range(start, stop + 1)]
+    K_estimate = start + np.argmin(bic)
+    return bic, K_estimate
+
+
 def main(args):
     """
-    fname = "data1.csv"
+    fname = "data3.csv"
     n_clusters = 2
     """
     fname = args.fname
@@ -200,6 +258,23 @@ def main(args):
     data = pd.read_csv(os.path.join(path, "data", fname), header=None).values
     pi, mu, sigma = init(data, n_clusters)
     likelihoods, pi, mu, sigma = em_algorithm(data, pi, mu, sigma)
+
+    # BIC
+    bic, K_estimate = estimate_n_clusters(data)
+    fig = plt.figure()
+    fig.add_subplot(
+        111,
+        title=f"{ftitle}  BIC sequence",
+        xlabel="n_clusters",
+        ylabel="BIC",
+        xticks=np.append(np.array([1, 5, 10]), K_estimate),
+    )
+    plt.plot(range(1, len(bic) + 1), bic, c="darkblue")
+    plt.axvline(x=K_estimate, c="r", linestyle="dashed")
+    # plt.tight_layout()
+    plt.grid(ls=":")
+    plt.savefig(os.path.join(path, "result", f"{ftitle}_bic.png"), transparent=True)
+    plt.show()
 
     # plot likelihood
     fig = plt.figure()
