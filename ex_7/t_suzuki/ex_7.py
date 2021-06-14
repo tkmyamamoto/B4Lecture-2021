@@ -7,6 +7,20 @@ from scipy.stats import multivariate_normal
 
 
 def gauss(data, mean, sigma):
+    """
+    input
+    data  : ndarray (n, dim)
+            input data
+    mean  : ndarray (k, dim)
+            data means (centroid)
+    sigma : ndarray (k, dim, dim)
+            convariance matrix
+
+    return
+    gauss : ndarray
+            Gaussian distribution
+    """
+
     n = data.shape[0]
     dim = data.shape[1]
     gauss = np.array([])
@@ -23,18 +37,77 @@ def gauss(data, mean, sigma):
 
 
 def gmm(data, mean, sigma, pi):
+    """
+    input
+    data  : ndarray (n, dim)
+            input data
+    mean  : ndarray (k, dim)
+            data means
+    sigma : ndarray (k, dim, dim)
+            convariance matrix
+
+    return
+    output : ndarray (k, n)
+             pi * gaussian distribution
+    prob   : ndarray ( , n)
+             probability density
+    """
+
     cls_num = len(mean)
     output = np.array([pi[k] * gauss(data, mean[k], sigma[k]) for k in range(cls_num)])
-    return output, np.sum(output, axis=0)[np.newaxis, :]
+    prob = np.sum(output, axis=0)[np.newaxis, :]
+    return output, prob
 
 
 def log_likelihood(data, mean, sigma, pi):
-    _, gmm_sum = gmm(data, mean, sigma, pi)
-    likelihood = np.sum(np.log(gmm_sum), axis=1)
+    """
+    input
+    data  : ndarray (n, dim)
+            input data
+    mean  : ndarray (k, dim)
+            data means
+    sigma : ndarray (k, dim, dim)
+            convariance matrix
+    pi    : ndarray (k)
+            mixing coefficient
+
+    return
+    likelihood : float
+                 log likelihood function
+    """
+
+    _, prob = gmm(data, mean, sigma, pi)
+    likelihood = np.sum(np.log(prob), axis=1)
     return likelihood
 
 
 def em_algorithm(data, cls_num, mean, sigma, pi, thr):
+    """
+    input
+    data    : ndarray (n, dim)
+              input data
+    cls_num : int
+              number of cluster
+    mean    : ndarray (k, dim)
+              data means
+    sigma   : ndarray (k, dim, dim)
+              convariance matrix
+    pi      : ndarray (k)
+              mixing coefficient
+    thr     : float
+              threshold of EM algorithm
+
+    return
+    log_list : list of float
+               log likelihood values
+    mean     : ndarray (k, dim)
+               data means
+    sigma    : ndarray (k, dim, dim)
+               convariance matrix
+    pi       : ndarray (k)
+               mixing coefficient
+    """
+
     cnt = 0
     n, dim = data.shape
     log_list = np.array(log_likelihood(data, mean, sigma, pi))
@@ -73,7 +146,6 @@ def main():
     parser.add_argument("--k", type=int, required=True, help="number of cluster")
     parser.add_argument("--thr", type=float, default=0.001, help="threshold value of EM algorithm")
     args = parser.parse_args()
-
     cls_num = args.k
     thr = args.thr
 

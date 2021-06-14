@@ -6,6 +6,20 @@ import matplotlib.pyplot as plt
 
 
 def gauss(data, mean, sigma):
+    """
+    input
+    data  : ndarray (n, dim)
+            input data
+    mean  : ndarray (k, dim)
+            data means (centroid)
+    sigma : ndarray (k, dim, dim)
+            convariance matrix
+
+    return
+    gauss : ndarray
+            Gaussian distribution
+    """
+
     n = data.shape[0]
     dim = data.shape[1]
     gauss = np.array([])
@@ -22,18 +36,76 @@ def gauss(data, mean, sigma):
 
 
 def gmm(data, mean, sigma, pi):
+    """
+    input
+    data  : ndarray (n, dim)
+            input data
+    mean  : ndarray (k, dim)
+            data means
+    sigma : ndarray (k, dim, dim)
+            convariance matrix
+
+    return
+    output : ndarray (k, n)
+             pi * gaussian distribution
+    prob   : ndarray ( , n)
+             probability density
+    """
+
     cls_num = len(mean)
     output = np.array([pi[k] * gauss(data, mean[k], sigma[k]) for k in range(cls_num)])
     return output, np.sum(output, axis=0)[np.newaxis, :]
 
 
 def log_likelihood(data, mean, sigma, pi):
+    """
+    input
+    data  : ndarray (n, dim)
+            input data
+    mean  : ndarray (k, dim)
+            data means
+    sigma : ndarray (k, dim, dim)
+            convariance matrix
+    pi    : ndarray (k)
+            mixing coefficient
+
+    return
+    likelihood : float
+                 log likelihood function
+    """
+
     _, gmm_sum = gmm(data, mean, sigma, pi)
     likelihood = np.sum(np.log(gmm_sum), axis=1)
     return likelihood
 
 
 def em_algorithm(data, cls_num, mean, sigma, pi, thr):
+    """
+    input
+    data    : ndarray (n, dim)
+              input data
+    cls_num : int
+              number of cluster
+    mean    : ndarray (k, dim)
+              data means
+    sigma   : ndarray (k, dim, dim)
+              convariance matrix
+    pi      : ndarray (k)
+              mixing coefficient
+    thr     : float
+              threshold of EM algorithm
+
+    return
+    log_list : list of float
+               log likelihood values
+    mean     : ndarray (k, dim)
+               data means
+    sigma    : ndarray (k, dim, dim)
+               convariance matrix
+    pi       : ndarray (k)
+               mixing coefficient
+    """
+
     cnt = 0
     n, dim = data.shape
     log_list = np.array(log_likelihood(data, mean, sigma, pi))
@@ -65,12 +137,44 @@ def em_algorithm(data, cls_num, mean, sigma, pi, thr):
     return log_list, mean, sigma, pi
 
 
-def aic(likelihood, cls_num, n, dim):
+def aic(likelihood, cls_num, dim):
+    """
+    input
+    likelihood : float
+                 last likelihood function value
+    cls_num    : int
+                 number of cluster
+    n          : int
+                 number of data
+    dim        : int
+                 data dimensions
+
+    return
+    aic : float
+          aic value
+    """
+
     aic = aic = -2 * likelihood + 2 * cls_num * (1 + dim + dim ** 2)
     return aic
 
 
 def bic(likelihood, cls_num, n, dim):
+    """
+    input
+    likelihood : float
+                 last likelihood function value
+    cls_num    : int
+                 number of cluster
+    n          : int
+                 number of data
+    dim        : int
+                 data dimensions
+
+    return
+    aic : float
+          aic value
+    """
+
     bic = -2 * likelihood + cls_num * (1 + dim + dim ** 2) * np.log(n)
     return bic
 
@@ -112,7 +216,7 @@ def main():
         # EM Algorithm
         likelihood, mean, sigma, pi = em_algorithm(data, cls_num, mean, sigma, pi, thr)
         print(f'Finish: k = {cls_num}')
-        aic_list.append(aic(likelihood[-1], cls_num, n, dim))
+        aic_list.append(aic(likelihood[-1], cls_num, dim))
         bic_list.append(bic(likelihood[-1], cls_num, n, dim))
         
     # plot bic
