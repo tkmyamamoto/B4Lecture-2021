@@ -8,6 +8,15 @@ import ex_5.a_miyashita.kmeans as km
 
 
 def gaussian(x, mu, sigma):
+    """
+        Calculate plausibility of gaussian distribution.
+        # Args
+            x (ndarray, axis=(sample, dim)): input data
+            mu (ndarray, axis=(dim,)): mean vector
+            sigmma (ndarray, axis=(dim, dim)): covariance matrix
+        # Returns
+            out (ndarray, axis=(samples,)): plausibility
+    """
     # (samplesize, dim)<-(samplesize, dim)-(dim,)
     dev = x - mu
     det = np.linalg.det(sigma)
@@ -19,13 +28,28 @@ def gaussian(x, mu, sigma):
 
 class Gmm:
     def __init__(self, k, dim):
+        """
+            Class of mixtures of gaussian.
+            # Args
+                k (int): number of components of GMM
+                dim (int): dimension of data
+        """
         self.k = k
         self.dim = dim
+        # mixture coefficient
         self.pi = np.zeros(k)
+        # mean
         self.mu = np.zeros((k, dim))
+        # covariance matrix
         self.sigma = np.zeros((k, dim, dim))
 
     def fit(self, x, y=None):
+        """
+            Fit parameters by EM.
+            # Args
+                x (ndarray, axis=(samples, dim)): input data
+                y (None): dummy
+        """
         if x.shape[1] != self.dim:
             print(f"GMM.fit: x has invalid dimension {x.shape[1]}")
             sys.exit()
@@ -51,6 +75,7 @@ class Gmm:
         plauss = np.array([])
 
         while 1:
+            # calculate plausibility and responsibility
             gamma = np.zeros((self.k, samplesize))
             for i in range(self.k):
                 gamma[i] = self.pi[i]*gaussian(x, self.mu[i], self.sigma[i])
@@ -59,10 +84,10 @@ class Gmm:
             plaus = np.sum(np.log(plaus))
             if np.abs(plaus - prev) < 1e-16:
                 break
-
             prev = plaus
             plauss = np.append(plauss, plaus)
 
+            # optimize parameters
             # (k,)<-(k, samplesize)
             n = np.sum(gamma, axis=1)
             # (k, dim)<-(k, samplesize)@(samplesize, dim)
@@ -84,6 +109,14 @@ class Gmm:
         plt.show()
 
     def predict(self, x):
+        """
+            Calculate plausibility of given data according to learnt parameters.
+            # Args
+                x (ndarray, axis=(samples, dim)): input data
+
+            # Returns
+                p (ndarray, axis=(samples,)): plausibility
+        """
         samplesize = x.shape[0]
 
         p = np.zeros((self.k, samplesize))
@@ -117,10 +150,13 @@ def main():
         plt.legend(bbox_to_anchor=(1, 0), loc="lower right", borderaxespad=1)
         plt.show()
 
+        # model fitting and prediction
         model = Gmm(args.k, 1)
         model.fit(data)
         x = np.linspace(data.min(), data.max(), 500)
         p = model.predict(x[:,np.newaxis])
+
+        #plot
         plt.plot(x, p, label="predicted distribution")
         plt.scatter(data[:,0], np.zeros_like(data[:,0]), facecolor='None', edgecolors='g', label="observed data")
         plt.scatter(model.mu[:,0], np.zeros_like(model.mu[:,0]), marker='x', color='r', label="centroids")
@@ -137,9 +173,9 @@ def main():
         plt.xlabel("$x_0$")
         plt.ylabel("$x_1$")
         plt.legend(bbox_to_anchor=(1, 0), loc="lower right", borderaxespad=1)
-        # plt.axes().set_aspect('equal')
         plt.show()
 
+        # model fitting and prediction
         model = Gmm(args.k, 2)
         model.fit(data)
 
