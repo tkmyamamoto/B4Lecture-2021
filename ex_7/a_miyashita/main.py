@@ -56,6 +56,7 @@ class Gmm:
         
         samplesize = x.shape[0]
 
+        # initialize parameters
         means_init = km.k_meanstt(x, self.k)
         means, labels = km.k_means(x, means_init, one_hot=True)
         # (k,)<-(samplesize, k)
