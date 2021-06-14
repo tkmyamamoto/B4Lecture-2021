@@ -65,8 +65,13 @@ def em_algorithm(data, cls_num, mean, sigma, pi, thr):
     return log_list, mean, sigma, pi
 
 
-def bic(likelihood, cls_num, n):
-    bic = -2 * likelihood + cls_num * 3 * np.log(n)
+def aic(likelihood, cls_num, n, dim):
+    aic = aic = -2 * likelihood + 2 * cls_num * (1 + dim + dim ** 2)
+    return aic
+
+
+def bic(likelihood, cls_num, n, dim):
+    bic = -2 * likelihood + cls_num * (1 + dim + dim ** 2) * np.log(n)
     return bic
 
 
@@ -74,7 +79,7 @@ def main():
     # argments settings
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=str, required=True, help="input data file path")
-    parser.add_argument("--lim", type=int, default=5, help="number of cluster limit")
+    parser.add_argument("--lim", type=int, default=8, help="number of cluster limit")
     parser.add_argument("--thr", type=float, default=0.001, help="threshold value of EM algorithm")
     args = parser.parse_args()
 
@@ -89,10 +94,11 @@ def main():
     data = pd.read_csv(args.input).to_numpy()
     n, dim = data.shape
 
+    aic_list = []
     bic_list = []
 
-    print(f'Calculating BIC from k = 2 to {lim-1} ...')
-    for cls_num in range(2, lim):
+    print(f'Calculating AIC and BIC from k = 1 to {lim-1} ...')
+    for cls_num in range(1, lim):
         
         # parameter initialization
         pi = np.zeros(cls_num)
@@ -106,16 +112,20 @@ def main():
         # EM Algorithm
         likelihood, mean, sigma, pi = em_algorithm(data, cls_num, mean, sigma, pi, thr)
         print(f'Finish: k = {cls_num}')
-        bic_list.append(bic(likelihood[-1], cls_num, n))
+        aic_list.append(aic(likelihood[-1], cls_num, n, dim))
+        bic_list.append(bic(likelihood[-1], cls_num, n, dim))
         
     # plot bic
-    plt.plot([x for x in range(2, lim)], bic_list)
+    plt.plot([x for x in range(1, lim)], aic_list, label='AIC')
+    plt.plot([x for x in range(1, lim)], bic_list, label='BIC')
     plt.xlabel('Cluster num')
-    plt.ylabel('BIC')
+    plt.ylabel('Imformation criterion')
+    plt.legend()
     plt.show(block=True)
     plt.close()
 
-    print(f'Best Cluster num is {bic_list.index(min(bic_list)) + 2}')
+    print(f'AIC Best Cluster num is {aic_list.index(min(aic_list)) + 1}')
+    print(f'BIC Best Cluster num is {bic_list.index(min(bic_list)) + 1}')
 
 
 if __name__ == '__main__':
