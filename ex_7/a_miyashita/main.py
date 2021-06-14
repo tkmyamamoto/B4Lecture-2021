@@ -12,17 +12,20 @@ def gaussian(x, mu, sigma):
         Calculate plausibility of gaussian distribution.
         # Args
             x (ndarray, axis=(sample, dim)): input data
-            mu (ndarray, axis=(dim,)): mean vector
-            sigmma (ndarray, axis=(dim, dim)): covariance matrix
+            mu (ndarray, axis=(k, dim)): mean vector
+            sigmma (ndarray, axis=(k, dim, dim)): covariance matrix
         # Returns
-            out (ndarray, axis=(samples,)): plausibility
+            out (ndarray, axis=(samples, k)): plausibility
     """
-    # (samplesize, dim)<-(samplesize, dim)-(dim,)
-    dev = x - mu
+    # (samplesize, k, dim)<-(samplesize, 1, dim)-(k, dim)
+    dev = x[:,np.newaxis,:] - mu
+    # (k,)<-(k, dim, dim)
     det = np.linalg.det(sigma)
+    # (k, dim, dim)<-(k, dim, dim)
     lamda = np.linalg.inv(sigma)
-    # (samplesize,)<-(samplesize, row),(row, col),(samplesize, col)
-    z = np.einsum('ij,jk,ik->i', dev, lamda, dev)
+    # (samplesize,)<-(samplesize, k, row),(k, row, col),(samplesize, k, col)
+    z = np.einsum('skr,krc,skc->sk', dev, lamda, dev)
+    # (samplesize, k)<-(samplesize, k)/(k,)
     return np.exp(-0.5*z)/np.sqrt(2*np.pi*det)
 
 
@@ -77,11 +80,10 @@ class Gmm:
 
         while 1:
             # calculate plausibility and responsibility
-            gamma = np.zeros((self.k, samplesize))
-            for i in range(self.k):
-                gamma[i] = self.pi[i]*gaussian(x, self.mu[i], self.sigma[i])
-            plaus = np.sum(gamma, axis=0)
-            gamma = gamma/plaus
+            # (samplesize, k)<-(k,)*(samplesize, k)
+            gamma = self.pi*gaussian(x, self.mu, self.sigma)
+            plaus = np.sum(gamma, axis=1)
+            gamma = gamma/plaus[:,np.newaxis]
             plaus = np.sum(np.log(plaus))
             if np.abs(plaus - prev) < 1e-16:
                 break
@@ -89,16 +91,16 @@ class Gmm:
             plauss = np.append(plauss, plaus)
 
             # optimize parameters
-            # (k,)<-(k, samplesize)
-            n = np.sum(gamma, axis=1)
+            # (k,)<-(samplesize, k)
+            n = np.sum(gamma, axis=0)
             # (k, dim)<-(k, samplesize)@(samplesize, dim)
-            self.mu = gamma @ x
+            self.mu = gamma.T @ x
             # (k, dim)<-(k, dim)/(k, 1)
             self.mu = self.mu/n[:,np.newaxis]
             # (samplesize, k, dim)<-(samplesize, 1, dim)-(k, dim)
             dev = x[:,np.newaxis,:] - self.mu
-            # (k, row, col)<-(k, samplesize),(samplesize, k, row),(samplesize, k, col)
-            self.sigma = np.einsum('ks,skr,skc->krc', gamma, dev, dev)
+            # (k, row, col)<-(samplesize, k),(samplesize, k, row),(samplesize, k, col)
+            self.sigma = np.einsum('sk,skr,skc->krc', gamma, dev, dev)
             # (k, row, col)<-(k, row, col)/(k, 1, 1)
             self.sigma = self.sigma/n[:,np.newaxis,np.newaxis]
             # (k,)<-(k,)/()
@@ -119,12 +121,9 @@ class Gmm:
                 p (ndarray, axis=(samples,)): plausibility
         """
         samplesize = x.shape[0]
-
-        p = np.zeros((self.k, samplesize))
-        for i in range(self.k):
-            p[i] = self.pi[i]*gaussian(x, self.mu[i], self.sigma[i])
-        
-        p = np.sum(p, axis=0)
+        # (samplesize, k)<-(k,)*(samplesize, k)
+        p = self.pi*gaussian(x, self.mu, self.sigma)
+        p = np.sum(p, axis=1)
         return p
 
 
