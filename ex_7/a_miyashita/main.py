@@ -121,12 +121,13 @@ def main():
         model.fit(data)
         x = np.linspace(data.min(), data.max(), 500)
         p = model.predict(x[:,np.newaxis])
-        plt.plot(x, p)
-        plt.scatter(data[:,0], np.zeros_like(data[:,0]), facecolor='None', edgecolors='r')
-        plt.scatter(model.mu[:,0], np.zeros_like(model.mu[:,0]), marker='x')
+        plt.plot(x, p, label="predicted distribution")
+        plt.scatter(data[:,0], np.zeros_like(data[:,0]), facecolor='None', edgecolors='g', label="observed data")
+        plt.scatter(model.mu[:,0], np.zeros_like(model.mu[:,0]), marker='x', color='r', label="centroids")
         plt.title(args.sc)
         plt.xlabel("$x$")
         plt.ylabel("$p(x)$")
+        plt.legend()
         plt.show()
 
     if data.shape[1] == 2:
@@ -159,11 +160,12 @@ def main():
         p = p.reshape(500, 500)
 
         plt.contour(xx, yy, p, levels=15)
-        plt.scatter(data[:,0], data[:,1], facecolor='None', edgecolors='r')
-        plt.scatter(model.mu[:,0], model.mu[:,1], marker='x')
+        plt.scatter(data[:,0], data[:,1], facecolor='None', edgecolors='r', label="observed data")
+        plt.scatter(model.mu[:,0], model.mu[:,1], marker='x', label="centroids")
         plt.title(args.sc)
         plt.xlabel("$x_0$")
         plt.ylabel("$x_1$")
+        plt.legend()
         plt.show()
 
 if __name__ == "__main__":
