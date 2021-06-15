@@ -154,7 +154,7 @@ def aic(likelihood, cls_num, dim):
           aic value
     """
 
-    aic = aic = -2 * likelihood + 2 * cls_num * (1 + dim + dim ** 2)
+    aic = -2 * likelihood + 2 * cls_num * (1 + dim + dim ** 2)
     return aic
 
 
@@ -195,7 +195,7 @@ def main():
         os.makedirs('./out')
 
     # loading data
-    data = pd.read_csv(args.input).to_numpy()
+    data = pd.read_csv(args.input, header=None).to_numpy()
     n, dim = data.shape
 
     aic_list = []
