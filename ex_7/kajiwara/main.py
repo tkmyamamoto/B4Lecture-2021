@@ -161,6 +161,9 @@ def em_algorithm(X, Pi, Mu, Sigma, epsilon):
         variances of each class
     """
 
+    print('init parameters')
+    print(f'means:\n {Mu}\n variances:\n {Sigma}\n mixture coef:\n {Pi}\n')
+
     ite = 0
     likelihoods = []
     log_l = log_likelihood(X, Pi, Mu, Sigma)
@@ -194,7 +197,10 @@ def em_algorithm(X, Pi, Mu, Sigma, epsilon):
         print(f'iteration: {ite},  likelihood: {l_new},  gap: {gap}')
 
         if gap < epsilon:
+            print('='*10)
             print(f'finished  iteration: {ite},  likelihood: {l_new}')
+            print(f'means:\n {Mu}\n variances:\n {Sigma}\n mixture coef:\n {Pi}\n')
+            print('='*10)
             break
 
         ite += 1
